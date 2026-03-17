@@ -111,14 +111,14 @@ class _CalendarPageState extends State<CalendarPage> {
               child: Column(
                 children: [
                   Text(
-                    '${day.year}年${day.month}月${day.day}日 任务',
+                    '${day.year}年${day.month}月${day.day}日 待办',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   const Divider(),
                   Expanded(
                     child: tasksForDay.isEmpty
-                        ? const Center(child: Text('今天没有任务'))
+                        ? const Center(child: Text('今天没有待办'))
                         : ListView.builder(
                       controller: scrollController,
                       itemCount: tasksForDay.length,
@@ -181,7 +181,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       backgroundColor: morandiPurple,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('添加任务'),
+                    child: const Text('添加待办'),
                   ),
                 ],
               ),
@@ -218,25 +218,25 @@ class _CalendarPageState extends State<CalendarPage> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
           return AlertDialog(
-            title: const Text('添加任务'),
+            title: const Text('添加待办'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: titleController,
-                    decoration: const InputDecoration(labelText: '任务内容'),
+                    decoration: const InputDecoration(labelText: '待办内容'),
                   ),
                   Row(
                     children: [
-                      const Text('任务类型'),
+                      const Text('待办类型'),
                       const SizedBox(width: 10),
                       DropdownButton<String>(
                         value: taskType,
                         items: const [
-                          DropdownMenuItem(value: 'weekly', child: Text('每周任务')),
-                          DropdownMenuItem(value: 'longterm', child: Text('长期任务')),
-                          DropdownMenuItem(value: 'deadline', child: Text('截止任务')),
+                          DropdownMenuItem(value: 'weekly', child: Text('每周待办')),
+                          DropdownMenuItem(value: 'longterm', child: Text('长期待办')),
+                          DropdownMenuItem(value: 'deadline', child: Text('截止待办')),
                         ],
                         onChanged: (value) => setState(() => taskType = value!),
                       ),
@@ -281,7 +281,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     ),
                   Row(
                     children: [
-                      const Text('进度任务'),
+                      const Text('进度待办'),
                       Switch(
                         value: isProgressTask,
                         onChanged: (val) => setState(() => isProgressTask = val),

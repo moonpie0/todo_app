@@ -6,6 +6,8 @@ class TodoItem {
   int? target;
   List<String> completedDates;
   DateTime? deadline;
+  String? setId;
+  String? note;
 
   TodoItem({
     required this.title,
@@ -15,6 +17,8 @@ class TodoItem {
     this.target,
     List<String>? completedDates,
     this.deadline,
+    this.setId,
+    this.note,
   }) : completedDates = completedDates ?? [];
 
   Map<String, dynamic> toJson() => {
@@ -25,6 +29,8 @@ class TodoItem {
     'target': target,
     'completedDates': completedDates,
     'deadline': deadline?.toIso8601String(),
+    'setId': setId,
+    'note': note,
   };
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
@@ -36,6 +42,8 @@ class TodoItem {
       target: json['target'],
       completedDates: List<String>.from(json['completedDates'] ?? []),
       deadline: json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
+      setId: json['setId'],
+      note: json['note'],
     );
   }
 }

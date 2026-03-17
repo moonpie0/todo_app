@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/todo_item.dart';
+import '../models/task_set.dart';
 import 'package:intl/intl.dart';
-import '../main.dart'; // 导入颜色
+import '../main.dart';
 
 class TaskTile extends StatelessWidget {
   final TodoItem task;
@@ -9,6 +10,7 @@ class TaskTile extends StatelessWidget {
   final VoidCallback onDelete;
   final ValueChanged<int> onProgressChanged;
   final VoidCallback onEdit;
+  final TaskSet? taskSet;
 
   const TaskTile({
     Key? key,
@@ -17,6 +19,7 @@ class TaskTile extends StatelessWidget {
     required this.onDelete,
     required this.onProgressChanged,
     required this.onEdit,
+    this.taskSet,
   }) : super(key: key);
 
   @override
@@ -52,6 +55,19 @@ class TaskTile extends StatelessWidget {
                           : null,
                     ),
                   ),
+                  if (taskSet != null)
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: morandiBlue.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        taskSet!.name,
+                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ),
                   if (isWeekly)
                     Text(
                       '每周 ${task.weekday}',
@@ -95,6 +111,15 @@ class TaskTile extends StatelessWidget {
                       ],
                     ),
                   ],
+                  // 备注显示
+                  if (task.note != null && task.note!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '${task.note}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ),
                 ],
               ),
             ),
