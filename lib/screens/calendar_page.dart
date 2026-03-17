@@ -144,7 +144,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           subtitle: task.target != null
                               ? Text('进度: ${task.current}/${task.target}')
                               : (task.weekday != null
-                              ? Text('每周 ${task.weekday}')
+                              ? Text('每${task.weekday}')
                               : (task.deadline != null
                               ? Text('截止: ${DateFormat('yyyy-MM-dd').format(task.deadline!)}')
                               : null)),

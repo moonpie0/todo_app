@@ -70,7 +70,7 @@ class TaskTile extends StatelessWidget {
                     ),
                   if (isWeekly)
                     Text(
-                      '每周 ${task.weekday}',
+                      '每${task.weekday}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   if (hasDeadline)

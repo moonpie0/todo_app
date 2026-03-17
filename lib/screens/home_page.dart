@@ -11,6 +11,21 @@ import 'calendar_page.dart';
 import 'task_set_page.dart';
 import '../main.dart';
 
+// 星期映射函数
+String _getChineseWeekday(String? englishWeekday) {
+  if (englishWeekday == null) return '';
+  const map = {
+    'Monday': '周一',
+    'Tuesday': '周二',
+    'Wednesday': '周三',
+    'Thursday': '周四',
+    'Friday': '周五',
+    'Saturday': '周六',
+    'Sunday': '周日',
+  };
+  return map[englishWeekday] ?? englishWeekday;
+}
+
 class TodoHomePage extends StatefulWidget {
   @override
   _TodoHomePageState createState() => _TodoHomePageState();
@@ -329,6 +344,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       value: selectedWeekday,
                       hint: const Text('选择星期几'),
                       isExpanded: true,
+                      // 下拉选项显示中文
                       items: const [
                         'Monday',
                         'Tuesday',
@@ -339,7 +355,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                         'Sunday'
                       ].map((day) => DropdownMenuItem(
                         value: day,
-                        child: Text(day),
+                        child: Text(_getChineseWeekday(day)),
                       )).toList(),
                       onChanged: (value) => setState(() => selectedWeekday = value),
                     ),
@@ -509,6 +525,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       value: selectedWeekday,
                       hint: const Text('选择星期几'),
                       isExpanded: true,
+                      // 下拉选项显示中文
                       items: const [
                         'Monday',
                         'Tuesday',
@@ -519,7 +536,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                         'Sunday'
                       ].map((day) => DropdownMenuItem(
                         value: day,
-                        child: Text(day),
+                        child: Text(_getChineseWeekday(day)),
                       )).toList(),
                       onChanged: (value) => setState(() => selectedWeekday = value),
                     ),
@@ -623,7 +640,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     );
   }
 
-  // 分组每周待办
+  // 分组每周待办，分组标题显示中文
   Map<String, List<TodoItem>> _groupWeeklyTasks() {
     final Map<String, List<TodoItem>> grouped = {};
     for (var task in weeklyTasks) {
@@ -633,6 +650,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
       }
       grouped[day]!.add(task);
     }
+    // 星期顺序（英文）
     const weekOrder = [
       'Monday',
       'Tuesday',
@@ -705,18 +723,19 @@ class _TodoHomePageState extends State<TodoHomePage> {
 
     return ListView(
       children: filteredGrouped.entries.map((entry) {
+        // 将分组标题转换为中文
+        final chineseTitle = _getChineseWeekday(entry.key) == entry.key ? entry.key : _getChineseWeekday(entry.key);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                entry.key,
+                chineseTitle,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             ...entry.value.map((task) {
-              // taskSet 未使用，可以删除此行
               return WeeklyTaskTile(
                 task: task,
                 onDelete: () => _deleteTaskByItem(task),
@@ -759,7 +778,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(['每日待办', '每周固定', '长期待办', '截止待办', '待办集', '日历'][_currentIndex]),
+        title: Text(['每日待办', '每周待办', '长期待办', '截止待办', '待办集', '日历'][_currentIndex]), // 修改这里
         backgroundColor: morandiBlue,
         foregroundColor: Colors.white,
         actions: [
