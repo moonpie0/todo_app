@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../models/todo_item.dart';
+import '../main.dart';
 
 class CalendarPage extends StatefulWidget {
   final List<TodoItem> dailyTasks;
@@ -92,9 +93,8 @@ class _CalendarPageState extends State<CalendarPage> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      backgroundColor: Colors.transparent,
       builder: (context) {
         return DraggableScrollableSheet(
           initialChildSize: 0.6,
@@ -103,41 +103,22 @@ class _CalendarPageState extends State<CalendarPage> {
           expand: false,
           builder: (context, scrollController) {
             return Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
               padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
               child: Column(
                 children: [
-                  // 拖动把手
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    '${day.year}年${day.month}月${day.day}日',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    '${day.year}年${day.month}月${day.day}日 任务',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   const Divider(),
                   Expanded(
                     child: tasksForDay.isEmpty
-                        ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inbox, size: 48, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
-                          Text('今天没有任务', style: TextStyle(color: Colors.grey[600])),
-                        ],
-                      ),
-                    )
+                        ? const Center(child: Text('今天没有任务'))
                         : ListView.builder(
                       controller: scrollController,
                       itemCount: tasksForDay.length,
@@ -146,45 +127,46 @@ class _CalendarPageState extends State<CalendarPage> {
                         final isProgress = task.target != null && task.target! > 0;
                         final isCompleted = _isTaskCompletedOnDay(task, day);
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          child: ListTile(
-                            leading: isProgress
-                                ? const Icon(Icons.pie_chart)
-                                : Icon(
-                              isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-                              color: isCompleted ? Theme.of(context).colorScheme.primary : null,
+                        return ListTile(
+                          leading: isProgress
+                              ? Icon(Icons.pie_chart, color: morandiPurple)
+                              : (isCompleted
+                              ? Icon(Icons.check_box, color: morandiBlue)
+                              : Icon(Icons.check_box_outline_blank, color: morandiBlue)),
+                          title: Text(
+                            task.title,
+                            style: TextStyle(
+                              decoration: !isProgress && isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
                             ),
-                            title: Text(
-                              task.title,
-                              style: TextStyle(
-                                decoration: !isProgress && isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
-                            ),
-                            subtitle: task.target != null
-                                ? Text('进度: ${task.current}/${task.target}')
-                                : (task.weekday != null
-                                ? Text('每周 ${task.weekday}')
-                                : (task.deadline != null
-                                ? Text('截止: ${DateFormat('yyyy-MM-dd').format(task.deadline!)}')
-                                : null)),
-                            trailing: IconButton(
-                              icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
-                              onPressed: () {
-                                Navigator.pop(context);
-                                widget.onTaskEdit(context, task);
-                              },
-                            ),
-                            onTap: () {
-                              if (!isProgress) {
-                                widget.onTaskToggle(task, day);
-                                // 不需要立即关闭弹窗，但为了刷新，可以暂时关闭再打开（简单起见，关闭）
-                                Navigator.pop(context);
-                              }
-                            },
                           ),
+                          subtitle: task.target != null
+                              ? Text('进度: ${task.current}/${task.target}')
+                              : (task.weekday != null
+                              ? Text('每周 ${task.weekday}')
+                              : (task.deadline != null
+                              ? Text('截止: ${DateFormat('yyyy-MM-dd').format(task.deadline!)}')
+                              : null)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  widget.onTaskEdit(context, task);
+                                },
+                                color: morandiBlue,
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            if (!isProgress) {
+                              widget.onTaskToggle(task, day);
+                              Navigator.pop(context);
+                            }
+                          },
                         );
                       },
                     ),
@@ -196,10 +178,8 @@ class _CalendarPageState extends State<CalendarPage> {
                       _showAddDialog(context, day);
                     },
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      backgroundColor: morandiPurple,
+                      foregroundColor: Colors.white,
                     ),
                     child: const Text('添加任务'),
                   ),
@@ -286,7 +266,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       title: Text(selectedDate == null
                           ? '选择截止日期'
                           : '截止日期: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}'),
-                      trailing: const Icon(Icons.calendar_today),
+                      trailing: Icon(Icons.calendar_today, color: morandiBlue),
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -305,6 +285,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       Switch(
                         value: isProgressTask,
                         onChanged: (val) => setState(() => isProgressTask = val),
+                        activeColor: morandiPurple,
                       ),
                     ],
                   ),
@@ -374,7 +355,9 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('日历'),
+        title: null, // 去掉标题
+        backgroundColor: morandiBlue,
+        foregroundColor: Colors.white,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -407,11 +390,11 @@ class _CalendarPageState extends State<CalendarPage> {
                   margin: const EdgeInsets.all(1),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: isSelected ? Colors.blue : Colors.grey.shade300,
+                      color: isSelected ? morandiPurple : Colors.grey.shade300,
                       width: isSelected ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(2),
-                    color: isSelected ? Colors.blue.shade50 : null,
+                    color: isSelected ? morandiBlue.withOpacity(0.1) : null,
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(2.0),
@@ -423,7 +406,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
-                            color: isSelected ? Colors.blue : Colors.black,
+                            color: isSelected ? morandiPurple : Colors.black,
                           ),
                         ),
                         const SizedBox(height: 1),
@@ -461,6 +444,8 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddDialog(context, _selectedDay ?? _focusedDay),
+        backgroundColor: morandiPurple,
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
     );

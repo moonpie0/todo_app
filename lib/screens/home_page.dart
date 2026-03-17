@@ -7,6 +7,7 @@ import '../models/todo_item.dart';
 import '../widgets/task_title.dart';
 import '../widgets/weekly_task_title.dart';
 import 'calendar_page.dart';
+import '../main.dart';
 
 class TodoHomePage extends StatefulWidget {
   @override
@@ -20,10 +21,25 @@ class _TodoHomePageState extends State<TodoHomePage> {
   List<TodoItem> longTermTasks = [];
   List<TodoItem> deadlineTasks = [];
 
+  // 搜索相关
+  final TextEditingController _searchController = TextEditingController();
+  String _searchText = '';
+
   @override
   void initState() {
     super.initState();
     _loadTasks();
+    _searchController.addListener(() {
+      setState(() {
+        _searchText = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadTasks() async {
@@ -194,14 +210,14 @@ class _TodoHomePageState extends State<TodoHomePage> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
           return AlertDialog(
-            title: const Text('编辑任务'),
+            title: const Text('编辑待办'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: titleController,
-                    decoration: const InputDecoration(labelText: '任务内容'),
+                    decoration: const InputDecoration(labelText: '待办内容'),
                   ),
                   if (isWeeklyTask) ...[
                     const SizedBox(height: 8),
@@ -230,7 +246,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       title: Text(selectedDate == null
                           ? '选择截止日期'
                           : '截止日期: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}'),
-                      trailing: const Icon(Icons.calendar_today),
+                      trailing: Icon(Icons.calendar_today, color: morandiBlue),
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -330,20 +346,32 @@ class _TodoHomePageState extends State<TodoHomePage> {
         key: (k) => k, value: (k) => grouped[k]!);
   }
 
+  // 过滤任务列表
+  List<TodoItem> _filterTasks(List<TodoItem> tasks) {
+    if (_searchText.isEmpty) return tasks;
+    return tasks.where((task) =>
+        task.title.toLowerCase().contains(_searchText)).toList();
+  }
+
   Widget _buildSimpleList(List<TodoItem> tasks) {
-    if (tasks.isEmpty) return const Center(child: Text('暂无任务'));
+    final filtered = _filterTasks(tasks);
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(_searchText.isEmpty ? '暂无任务' : '没有匹配的任务'),
+      );
+    }
     return ListView.builder(
-      itemCount: tasks.length,
+      itemCount: filtered.length,
       itemBuilder: (ctx, index) => TaskTile(
-        task: tasks[index],
-        onToggle: () => _toggleTask(index),
-        onDelete: () => _deleteTask(index),
+        task: filtered[index],
+        onToggle: () => _toggleTask(tasks.indexOf(filtered[index])), // 注意索引映射
+        onDelete: () => _deleteTask(tasks.indexOf(filtered[index])),
         onProgressChanged: (newCurrent) {
-          tasks[index].current = newCurrent;
+          filtered[index].current = newCurrent;
           _saveTasks();
           setState(() {});
         },
-        onEdit: () => _showEditDialog(context, tasks[index]),
+        onEdit: () => _showEditDialog(context, filtered[index]),
       ),
     );
   }
@@ -353,8 +381,21 @@ class _TodoHomePageState extends State<TodoHomePage> {
     if (grouped.isEmpty) {
       return const Center(child: Text('暂无每周任务'));
     }
+    // 过滤每个分组内的任务
+    final filteredGrouped = <String, List<TodoItem>>{};
+    grouped.forEach((key, tasks) {
+      final filtered = _filterTasks(tasks);
+      if (filtered.isNotEmpty) {
+        filteredGrouped[key] = filtered;
+      }
+    });
+
+    if (filteredGrouped.isEmpty) {
+      return Center(child: Text(_searchText.isEmpty ? '暂无每周任务' : '没有匹配的任务'));
+    }
+
     return ListView(
-      children: grouped.entries.map((entry) {
+      children: filteredGrouped.entries.map((entry) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -429,7 +470,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       title: Text(selectedDate == null
                           ? '选择截止日期'
                           : '截止日期: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}'),
-                      trailing: const Icon(Icons.calendar_today),
+                      trailing: Icon(Icons.calendar_today, color: morandiBlue),
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -448,6 +489,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       Switch(
                         value: isProgressTask,
                         onChanged: (val) => setState(() => isProgressTask = val),
+                        activeColor: morandiPurple,
                       ),
                     ],
                   ),
@@ -538,6 +580,27 @@ class _TodoHomePageState extends State<TodoHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(['每日待办', '每周固定', '长期待办', '截止任务', '日历'][_currentIndex]),
+        backgroundColor: morandiBlue,
+        foregroundColor: Colors.white,
+        bottom: _currentIndex != 4 ? PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: '搜索任务...',
+                prefixIcon: Icon(Icons.search, color: morandiPurple),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+          ),
+        ) : null,
       ),
       body: _currentIndex == 4
           ? CalendarPage(
@@ -556,6 +619,8 @@ class _TodoHomePageState extends State<TodoHomePage> {
           ? null
           : FloatingActionButton(
         onPressed: () => _showAddDialog(context),
+        backgroundColor: morandiPurple,
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -564,7 +629,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
           setState(() => _currentIndex = index);
           if (index == 0) _checkDailyReset();
         },
-        selectedItemColor: Colors.blue,
+        selectedItemColor: morandiPurple,
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         items: const [
