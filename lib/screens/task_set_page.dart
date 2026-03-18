@@ -11,7 +11,7 @@ class TaskSetPage extends StatefulWidget {
   final Function(TodoItem) onTaskDelete;
   final Function(TodoItem, int) onProgressChanged;
   final Function(BuildContext, TodoItem) onTaskEdit;
-  final Function(TodoItem, SubTask) onSubTaskToggle; // 新增子任务切换回调
+  final Function(TodoItem, SubTask) onSubTaskToggle;
 
   const TaskSetPage({
     Key? key,
@@ -29,6 +29,22 @@ class TaskSetPage extends StatefulWidget {
 }
 
 class _TaskSetPageState extends State<TaskSetPage> {
+  // 计算待办集的副标题：显示待办数量和事项总数
+  String _getTaskSetSubtitle(List<TodoItem> tasks) {
+    int taskCount = tasks.length;
+    int itemCount = 0;
+    for (var task in tasks) {
+      if (task.subtasks.isEmpty) {
+        // 没有子任务时，任务本身算一个事项
+        itemCount += 1;
+      } else {
+        // 有子任务时，只计算子任务作为事项
+        itemCount += task.subtasks.length;
+      }
+    }
+    return '$taskCount个待办，共$itemCount个事项';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.taskSets.isEmpty) {
@@ -46,7 +62,7 @@ class _TaskSetPageState extends State<TaskSetPage> {
         return ExpansionTile(
           leading: Icon(Icons.folder, color: morandiPurple),
           title: Text(taskSet.name),
-          subtitle: Text('${tasksInSet.length}个待办'),
+          subtitle: Text(_getTaskSetSubtitle(tasksInSet)),
           children: tasksInSet.isEmpty
               ? [const Padding(
             padding: EdgeInsets.all(8.0),
@@ -55,12 +71,10 @@ class _TaskSetPageState extends State<TaskSetPage> {
               : tasksInSet.map((task) {
             return TaskTile(
               task: task,
-              isSelecting: false, // 待办集页面暂不支持多选
+              isSelecting: false,
               isSelected: false,
-              onTap: () => widget.onTaskEdit(context, task), // 点击卡片编辑
-              onLongPress: () {
-                // 长按可扩展，暂时不做任何事
-              },
+              onTap: () => widget.onTaskEdit(context, task),
+              onLongPress: () {},
               onToggle: () => widget.onTaskToggle(task),
               onSubTaskToggle: (subTask) => widget.onSubTaskToggle(task, subTask),
               onDelete: () => widget.onTaskDelete(task),
