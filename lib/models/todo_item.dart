@@ -5,36 +5,40 @@ part 'todo_item.g.dart';
 @HiveType(typeId: 1)
 class TodoItem {
   @HiveField(0)
-  String title;
+  String id; // 新增唯一标识符
 
   @HiveField(1)
-  bool isDone;
+  String title;
 
   @HiveField(2)
-  String? weekday;
+  bool isDone;
 
   @HiveField(3)
-  int? current;
+  String? weekday;
 
   @HiveField(4)
-  int? target;
+  int? current;
 
   @HiveField(5)
-  List<String> completedDates;
+  int? target;
 
   @HiveField(6)
-  DateTime? deadline;
+  List<String> completedDates;
 
   @HiveField(7)
-  String? setId;
+  DateTime? deadline;
 
   @HiveField(8)
-  String? note;
+  String? setId;
 
   @HiveField(9)
-  List<SubTask> subtasks; // 新增子任务列表
+  String? note;
+
+  @HiveField(10)
+  List<SubTask> subtasks;
 
   TodoItem({
+    String? id, // 可选，不传则自动生成
     required this.title,
     this.isDone = false,
     this.weekday,
@@ -45,10 +49,12 @@ class TodoItem {
     this.setId,
     this.note,
     List<SubTask>? subtasks,
-  })  : completedDates = completedDates ?? [],
+  })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString() + (1000 + (DateTime.now().microsecond % 9000)).toString(),
+        completedDates = completedDates ?? [],
         subtasks = subtasks ?? [];
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'title': title,
     'isDone': isDone,
     'weekday': weekday,
@@ -63,6 +69,7 @@ class TodoItem {
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
     return TodoItem(
+      id: json['id'], // 读取 id
       title: json['title'],
       isDone: json['isDone'] ?? false,
       weekday: json['weekday'],

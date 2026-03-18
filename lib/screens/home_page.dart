@@ -761,8 +761,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                 onPressed: () {
                   if (titleController.text.isEmpty) return;
                   if (_currentIndex == 1 && selectedWeekday == null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(content: Text('请选择星期几')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请选择星期几')));
                     return;
                   }
                   int? current, target;
@@ -770,8 +769,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     current = int.tryParse(currentController.text);
                     target = int.tryParse(targetController.text);
                     if (current == null || target == null || target <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('请填写有效的数字')));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请填写有效的数字')));
                       return;
                     }
                   }
@@ -813,8 +811,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     ];
     final sortedKeys = grouped.keys.toList()
       ..sort((a, b) => weekOrder.indexOf(a).compareTo(weekOrder.indexOf(b)));
-    return Map.fromIterable(sortedKeys,
-        key: (k) => k, value: (k) => grouped[k]!);
+    return Map.fromIterable(sortedKeys, key: (k) => k, value: (k) => grouped[k]!);
   }
 
   // 构建普通列表（每日、待办）
@@ -825,13 +822,18 @@ class _TodoHomePageState extends State<TodoHomePage> {
         child: Text(_searchText.isEmpty ? '暂无待办' : '没有匹配的待办'),
       );
     }
-    return ListView.builder(
+
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
       itemCount: filtered.length,
       itemBuilder: (ctx, index) {
         final task = filtered[index];
         final matchingSets = taskSets.where((set) => set.id == task.setId);
         final taskSet = matchingSets.isNotEmpty ? matchingSets.first : null;
+
+        // 必须为每个 item 提供 Key，这里使用 task.id（确保唯一）
         return TaskTile(
+          key: ValueKey(task.id),
           task: task,
           isSelecting: _isSelecting,
           isSelected: _selectedTasks.contains(task),
@@ -858,6 +860,22 @@ class _TodoHomePageState extends State<TodoHomePage> {
           },
           taskSet: taskSet,
         );
+      },
+      onReorder: (int oldIndex, int newIndex) {
+        // 处理索引：当 newIndex > oldIndex 时，由于删除操作，newIndex 需要减1
+        if (oldIndex < newIndex) {
+          newIndex -= 1;
+        }
+
+        // 根据当前标签页更新对应的列表
+        setState(() {
+          final currentList = _getCurrentTaskList();
+          final task = currentList.removeAt(oldIndex);
+          currentList.insert(newIndex, task);
+        });
+
+        // 保存到 Hive
+        _saveTasks();
       },
     );
   }

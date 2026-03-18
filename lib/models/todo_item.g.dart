@@ -17,42 +17,45 @@ class TodoItemAdapter extends TypeAdapter<TodoItem> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return TodoItem(
-      title: fields[0] as String,
-      isDone: fields[1] as bool,
-      weekday: fields[2] as String?,
-      current: fields[3] as int?,
-      target: fields[4] as int?,
-      completedDates: (fields[5] as List?)?.cast<String>(),
-      deadline: fields[6] as DateTime?,
-      setId: fields[7] as String?,
-      note: fields[8] as String?,
-      subtasks: (fields[9] as List?)?.cast<SubTask>(),
+      id: fields[0] as String?,
+      title: fields[1] as String,
+      isDone: fields[2] as bool,
+      weekday: fields[3] as String?,
+      current: fields[4] as int?,
+      target: fields[5] as int?,
+      completedDates: (fields[6] as List?)?.cast<String>(),
+      deadline: fields[7] as DateTime?,
+      setId: fields[8] as String?,
+      note: fields[9] as String?,
+      subtasks: (fields[10] as List?)?.cast<SubTask>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, TodoItem obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
-      ..write(obj.title)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.isDone)
+      ..write(obj.title)
       ..writeByte(2)
-      ..write(obj.weekday)
+      ..write(obj.isDone)
       ..writeByte(3)
-      ..write(obj.current)
+      ..write(obj.weekday)
       ..writeByte(4)
-      ..write(obj.target)
+      ..write(obj.current)
       ..writeByte(5)
-      ..write(obj.completedDates)
+      ..write(obj.target)
       ..writeByte(6)
-      ..write(obj.deadline)
+      ..write(obj.completedDates)
       ..writeByte(7)
-      ..write(obj.setId)
+      ..write(obj.deadline)
       ..writeByte(8)
-      ..write(obj.note)
+      ..write(obj.setId)
       ..writeByte(9)
+      ..write(obj.note)
+      ..writeByte(10)
       ..write(obj.subtasks);
   }
 
