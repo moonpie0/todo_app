@@ -5,7 +5,7 @@ part 'todo_item.g.dart';
 @HiveType(typeId: 1)
 class TodoItem {
   @HiveField(0)
-  String id; // 新增唯一标识符
+  String id;
 
   @HiveField(1)
   String title;
@@ -38,7 +38,7 @@ class TodoItem {
   List<SubTask> subtasks;
 
   TodoItem({
-    String? id, // 可选，不传则自动生成
+    String? id,
     required this.title,
     this.isDone = false,
     this.weekday,
@@ -69,7 +69,7 @@ class TodoItem {
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
     return TodoItem(
-      id: json['id'], // 读取 id
+      id: json['id'],
       title: json['title'],
       isDone: json['isDone'] ?? false,
       weekday: json['weekday'],

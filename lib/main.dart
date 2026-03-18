@@ -17,6 +17,7 @@ void main() async {
   // 注册适配器
   Hive.registerAdapter(TaskSetAdapter());
   Hive.registerAdapter(TodoItemAdapter());
+  Hive.registerAdapter(SubTaskAdapter());
   // 打开盒子
   await Hive.openBox('tasks');      // 用于存储 daily/weekly/longterm/deadline 列表
   await Hive.openBox('taskSets');    // 用于存储任务集列表
