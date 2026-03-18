@@ -31,6 +31,9 @@ class TodoItem {
   @HiveField(8)
   String? note;
 
+  @HiveField(9)
+  List<SubTask> subtasks; // 新增子任务列表
+
   TodoItem({
     required this.title,
     this.isDone = false,
@@ -41,7 +44,9 @@ class TodoItem {
     this.deadline,
     this.setId,
     this.note,
-  }) : completedDates = completedDates ?? [];
+    List<SubTask>? subtasks,
+  })  : completedDates = completedDates ?? [],
+        subtasks = subtasks ?? [];
 
   Map<String, dynamic> toJson() => {
     'title': title,
@@ -53,6 +58,7 @@ class TodoItem {
     'deadline': deadline?.toIso8601String(),
     'setId': setId,
     'note': note,
+    'subtasks': subtasks.map((s) => s.toJson()).toList(),
   };
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
@@ -66,6 +72,32 @@ class TodoItem {
       deadline: json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
       setId: json['setId'],
       note: json['note'],
+      subtasks: (json['subtasks'] as List? ?? [])
+          .map((s) => SubTask.fromJson(s))
+          .toList(),
+    );
+  }
+}
+
+@HiveType(typeId: 2)
+class SubTask {
+  @HiveField(0)
+  String title;
+
+  @HiveField(1)
+  bool isDone;
+
+  SubTask({required this.title, this.isDone = false});
+
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'isDone': isDone,
+  };
+
+  factory SubTask.fromJson(Map<String, dynamic> json) {
+    return SubTask(
+      title: json['title'],
+      isDone: json['isDone'] ?? false,
     );
   }
 }

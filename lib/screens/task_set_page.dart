@@ -11,6 +11,7 @@ class TaskSetPage extends StatefulWidget {
   final Function(TodoItem) onTaskDelete;
   final Function(TodoItem, int) onProgressChanged;
   final Function(BuildContext, TodoItem) onTaskEdit;
+  final Function(TodoItem, SubTask) onSubTaskToggle; // 新增子任务切换回调
 
   const TaskSetPage({
     Key? key,
@@ -20,6 +21,7 @@ class TaskSetPage extends StatefulWidget {
     required this.onTaskDelete,
     required this.onProgressChanged,
     required this.onTaskEdit,
+    required this.onSubTaskToggle,
   }) : super(key: key);
 
   @override
@@ -53,12 +55,18 @@ class _TaskSetPageState extends State<TaskSetPage> {
               : tasksInSet.map((task) {
             return TaskTile(
               task: task,
+              isSelecting: false, // 待办集页面暂不支持多选
+              isSelected: false,
+              onTap: () => widget.onTaskEdit(context, task), // 点击卡片编辑
+              onLongPress: () {
+                // 长按可扩展，暂时不做任何事
+              },
               onToggle: () => widget.onTaskToggle(task),
+              onSubTaskToggle: (subTask) => widget.onSubTaskToggle(task, subTask),
               onDelete: () => widget.onTaskDelete(task),
               onProgressChanged: (newCurrent) {
                 widget.onProgressChanged(task, newCurrent);
               },
-              onEdit: () => widget.onTaskEdit(context, task),
               taskSet: taskSet,
             );
           }).toList(),
