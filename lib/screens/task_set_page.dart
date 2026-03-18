@@ -29,20 +29,18 @@ class TaskSetPage extends StatefulWidget {
 }
 
 class _TaskSetPageState extends State<TaskSetPage> {
-  // 计算待办集的副标题：显示待办数量和事项总数
-  String _getTaskSetSubtitle(List<TodoItem> tasks) {
-    int taskCount = tasks.length;
-    int itemCount = 0;
-    for (var task in tasks) {
-      if (task.subtasks.isEmpty) {
-        // 没有子任务时，任务本身算一个事项
-        itemCount += 1;
-      } else {
-        // 有子任务时，只计算子任务作为事项
-        itemCount += task.subtasks.length;
-      }
+  // 判断一个待办是否未完成（即“待办”数中的一项）
+  bool _isPending(TodoItem task) {
+    if (task.target != null && task.target! > 0) {
+      // 进度任务：当前 < 目标 则为未完成
+      return task.current! < task.target!;
+    } else if (task.subtasks.isNotEmpty) {
+      // 有子任务：任一子任务未完成则为未完成
+      return task.subtasks.any((s) => !s.isDone);
+    } else {
+      // 普通任务：isDone == false
+      return !task.isDone;
     }
-    return '$taskCount个待办，共$itemCount个事项';
   }
 
   @override
@@ -59,10 +57,13 @@ class _TaskSetPageState extends State<TaskSetPage> {
             .where((task) => task.setId == taskSet.id)
             .toList();
 
+        final totalCount = tasksInSet.length;
+        final pendingCount = tasksInSet.where((task) => _isPending(task)).length;
+
         return ExpansionTile(
           leading: Icon(Icons.folder, color: morandiPurple),
           title: Text(taskSet.name),
-          subtitle: Text(_getTaskSetSubtitle(tasksInSet)),
+          subtitle: Text('$pendingCount个待办，共$totalCount个事项'),
           children: tasksInSet.isEmpty
               ? [const Padding(
             padding: EdgeInsets.all(8.0),

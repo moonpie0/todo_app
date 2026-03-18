@@ -8,5 +8,5 @@ flutter框架 + hive数据库
 
 打包成apk
 ```agsl
-flutter build apk --releas
+flutter build apk --release
 ```
