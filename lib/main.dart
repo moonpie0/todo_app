@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/home_page.dart';
+import 'models/task_set.dart';
+import 'models/todo_item.dart';
 
 // 莫兰迪配色
-const Color morandiBlue = Color(0xFFA7C7E7);   // 淡蓝紫
-const Color morandiPurple = Color(0xFFB6A2D0); // 淡紫
-const Color morandiPink = Color(0xFFD9B8C4);   // 粉紫
-const Color morandiGreen = Color(0xFFB8C9B0);  // 灰绿（可选）
-const Color morandiRed = Color(0xFFE3B9B2);    // 粉红（用于删除）
+const Color morandiBlue = Color(0xFFA7C7E7);
+const Color morandiPurple = Color(0xFFB6A2D0);
+const Color morandiPink = Color(0xFFD9B8C4);
+const Color morandiGreen = Color(0xFFB8C9B0);
+const Color morandiRed = Color(0xFFE3B9B2);
 
-void main() => runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  // 注册适配器
+  Hive.registerAdapter(TaskSetAdapter());
+  Hive.registerAdapter(TodoItemAdapter());
+  // 打开盒子
+  await Hive.openBox('tasks');      // 用于存储 daily/weekly/longterm/deadline 列表
+  await Hive.openBox('taskSets');    // 用于存储任务集列表
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override

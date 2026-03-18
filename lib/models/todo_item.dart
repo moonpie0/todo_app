@@ -1,12 +1,34 @@
+import 'package:hive/hive.dart';
+
+part 'todo_item.g.dart';
+
+@HiveType(typeId: 1)
 class TodoItem {
+  @HiveField(0)
   String title;
+
+  @HiveField(1)
   bool isDone;
+
+  @HiveField(2)
   String? weekday;
+
+  @HiveField(3)
   int? current;
+
+  @HiveField(4)
   int? target;
+
+  @HiveField(5)
   List<String> completedDates;
+
+  @HiveField(6)
   DateTime? deadline;
+
+  @HiveField(7)
   String? setId;
+
+  @HiveField(8)
   String? note;
 
   TodoItem({

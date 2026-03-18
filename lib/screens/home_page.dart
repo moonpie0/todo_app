@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/todo_item.dart';
 import '../models/task_set.dart';
@@ -43,9 +42,16 @@ class _TodoHomePageState extends State<TodoHomePage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
 
+  // Hive 盒子
+  late Box tasksBox;
+  late Box taskSetsBox;
+
   @override
   void initState() {
     super.initState();
+    // 获取已打开的 Hive 盒子（在 main.dart 中初始化并打开）
+    tasksBox = Hive.box('tasks');
+    taskSetsBox = Hive.box('taskSets');
     _loadTasks();
     _loadTaskSets();
     _searchController.addListener(() {
@@ -61,66 +67,55 @@ class _TodoHomePageState extends State<TodoHomePage> {
     super.dispose();
   }
 
-  // 加载待办集
+  // ---------- 任务集操作 ----------
   Future<void> _loadTaskSets() async {
-    final prefs = await SharedPreferences.getInstance();
+    List<dynamic>? setsList = taskSetsBox.get('sets');
     setState(() {
-      String setsJson = prefs.getString('taskSets') ?? '[]';
-      List<dynamic> setsList = jsonDecode(setsJson);
-      taskSets = setsList.map((e) => TaskSet.fromJson(e)).toList();
+      taskSets = setsList?.cast<TaskSet>() ?? [];
     });
   }
 
   Future<void> _saveTaskSets() async {
-    final prefs = await SharedPreferences.getInstance();
-    String setsJson = jsonEncode(taskSets.map((e) => e.toJson()).toList());
-    await prefs.setString('taskSets', setsJson);
+    await taskSetsBox.put('sets', taskSets);
   }
 
-  // 加载待办
+  // ---------- 待办操作 ----------
   Future<void> _loadTasks() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      dailyTasks = _decodeTaskList(prefs.getString('daily') ?? '[]');
-      weeklyTasks = _decodeTaskList(prefs.getString('weekly') ?? '[]');
-      longTermTasks = _decodeTaskList(prefs.getString('longterm') ?? '[]');
-      deadlineTasks = _decodeTaskList(prefs.getString('deadline') ?? '[]');
+      dailyTasks = _getTaskList('daily');
+      weeklyTasks = _getTaskList('weekly');
+      longTermTasks = _getTaskList('longterm');
+      deadlineTasks = _getTaskList('deadline');
     });
     _checkDailyReset();
   }
 
+  List<TodoItem> _getTaskList(String key) {
+    List<dynamic>? list = tasksBox.get(key);
+    return list?.cast<TodoItem>() ?? [];
+  }
+
   Future<void> _saveTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('daily', _encodeTaskList(dailyTasks));
-    await prefs.setString('weekly', _encodeTaskList(weeklyTasks));
-    await prefs.setString('longterm', _encodeTaskList(longTermTasks));
-    await prefs.setString('deadline', _encodeTaskList(deadlineTasks));
-  }
-
-  String _encodeTaskList(List<TodoItem> list) {
-    return jsonEncode(list.map((e) => e.toJson()).toList());
-  }
-
-  List<TodoItem> _decodeTaskList(String str) {
-    List<dynamic> jsonList = jsonDecode(str);
-    return jsonList.map((e) => TodoItem.fromJson(e)).toList();
+    await tasksBox.put('daily', dailyTasks);
+    await tasksBox.put('weekly', weeklyTasks);
+    await tasksBox.put('longterm', longTermTasks);
+    await tasksBox.put('deadline', deadlineTasks);
   }
 
   void _checkDailyReset() async {
-    final prefs = await SharedPreferences.getInstance();
-    String lastDate = prefs.getString('lastDailyDate') ?? '';
+    String lastDate = tasksBox.get('lastDailyDate', defaultValue: '');
     String today = DateTime.now().toIso8601String().substring(0, 10);
     if (lastDate != today) {
       for (var task in dailyTasks) {
         task.completedDates.clear();
       }
-      await prefs.setString('lastDailyDate', today);
-      _saveTasks();
+      await tasksBox.put('lastDailyDate', today);
+      _saveTasks(); // 保存更改后的 dailyTasks
       setState(() {});
     }
   }
 
-  // 添加待办集
+  // ---------- 添加待办集 ----------
   void _addTaskSet(String name) {
     final newSet = TaskSet(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -133,7 +128,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     _saveTaskSets();
   }
 
-  // 添加待办（支持待办集选择）
+  // ---------- 添加待办（根据当前标签页）----------
   void _addTask(String title,
       {String? weekday,
         int? current,
@@ -163,6 +158,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
+  // 从日历页面添加待办（区分类型）
   void _addTaskFromCalendar(String title,
       {required String type,
         String? weekday,
@@ -191,6 +187,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
+  // 切换待办完成状态（列表）
   void _toggleTask(int index) {
     List<TodoItem> tasks;
     if (_currentIndex == 0) {
@@ -211,6 +208,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     }
   }
 
+  // 切换待办完成状态（通过待办对象）
   void _toggleTaskByItem(TodoItem task) {
     if (task.target != null) return;
     task.isDone = !task.isDone;
@@ -218,6 +216,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
+  // 删除待办（索引）
   void _deleteTask(int index) {
     List<TodoItem> tasks;
     if (_currentIndex == 0) {
@@ -237,6 +236,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
+  // 删除待办（通过待办对象）
   void _deleteTaskByItem(TodoItem task) {
     if (dailyTasks.contains(task)) {
       dailyTasks.remove(task);
@@ -251,6 +251,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
+  // 编辑待办对话框（内容保持不变）
   void _showEditDialog(BuildContext context, TodoItem task) {
     final titleController = TextEditingController(text: task.title);
     final currentController = TextEditingController(
@@ -344,7 +345,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       value: selectedWeekday,
                       hint: const Text('选择星期几'),
                       isExpanded: true,
-                      // 下拉选项显示中文
                       items: const [
                         'Monday',
                         'Tuesday',
@@ -475,7 +475,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     );
   }
 
-  // 添加待办对话框（增加待办集选择）
+  // 添加待办对话框
   void _showAddDialog(BuildContext context) {
     final titleController = TextEditingController();
     final currentController = TextEditingController();
@@ -525,7 +525,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       value: selectedWeekday,
                       hint: const Text('选择星期几'),
                       isExpanded: true,
-                      // 下拉选项显示中文
                       items: const [
                         'Monday',
                         'Tuesday',
@@ -640,7 +639,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     );
   }
 
-  // 分组每周待办，分组标题显示中文
+  // 分组每周待办
   Map<String, List<TodoItem>> _groupWeeklyTasks() {
     final Map<String, List<TodoItem>> grouped = {};
     for (var task in weeklyTasks) {
@@ -650,7 +649,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
       }
       grouped[day]!.add(task);
     }
-    // 星期顺序（英文）
     const weekOrder = [
       'Monday',
       'Tuesday',
@@ -708,7 +706,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
     if (grouped.isEmpty) {
       return const Center(child: Text('暂无每周待办'));
     }
-    // 过滤每个分组内的待办
     final filteredGrouped = <String, List<TodoItem>>{};
     grouped.forEach((key, tasks) {
       final filtered = _filterTasks(tasks);
@@ -723,8 +720,9 @@ class _TodoHomePageState extends State<TodoHomePage> {
 
     return ListView(
       children: filteredGrouped.entries.map((entry) {
-        // 将分组标题转换为中文
-        final chineseTitle = _getChineseWeekday(entry.key) == entry.key ? entry.key : _getChineseWeekday(entry.key);
+        final chineseTitle = _getChineseWeekday(entry.key) == entry.key
+            ? entry.key
+            : _getChineseWeekday(entry.key);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -753,6 +751,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     );
   }
 
+  // 日历回调
   void _onCalendarTaskToggle(TodoItem task, DateTime date) {
     final dateStr = date.toIso8601String().substring(0, 10);
     if (task.target != null) return;
@@ -778,16 +777,14 @@ class _TodoHomePageState extends State<TodoHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(['每日待办', '每周待办', '长期待办', '截止待办', '待办集', '日历'][_currentIndex]), // 修改这里
+        title: Text(['每日待办', '每周待办', '长期待办', '截止待办', '待办集', '日历'][_currentIndex]),
         backgroundColor: morandiBlue,
         foregroundColor: Colors.white,
         actions: [
-          // 新增待办按钮
           IconButton(
             icon: const Icon(Icons.add_task),
             onPressed: _currentIndex == 5 ? null : () => _showAddDialog(context),
           ),
-          // 新增待办集按钮
           IconButton(
             icon: const Icon(Icons.create_new_folder),
             onPressed: () => _showAddTaskSetDialog(context),

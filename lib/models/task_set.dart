@@ -1,6 +1,16 @@
+import 'package:hive/hive.dart';
+
+part 'task_set.g.dart';
+
+@HiveType(typeId: 0)
 class TaskSet {
+  @HiveField(0)
   String id;
+
+  @HiveField(1)
   String name;
+
+  @HiveField(2)
   DateTime createdAt;
 
   TaskSet({
