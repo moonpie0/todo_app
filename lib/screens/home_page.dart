@@ -916,12 +916,23 @@ class _TodoHomePageState extends State<TodoHomePage> {
             ),
             ...entry.value.map((task) {
               return WeeklyTaskTile(
+                key: ValueKey(task.id),
                 task: task,
-                onDelete: () => _deleteTask(task),
-                onViewCalendar: () {
-                  setState(() => _currentIndex = 4);
+                isSelecting: _isSelecting,
+                isSelected: _selectedTasks.contains(task),
+                onTap: () {
+                  if (_isSelecting) {
+                    _toggleSelection(task);
+                  } else {
+                    _showEditDialog(context, task);
+                  }
                 },
-                onEdit: () => _showEditDialog(context, task),
+                onLongPress: () {
+                  if (!_isSelecting) {
+                    _enterSelectMode();
+                    _toggleSelection(task);
+                  }
+                },
               );
             }).toList(),
           ],
