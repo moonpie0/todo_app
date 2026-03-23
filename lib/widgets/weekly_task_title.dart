@@ -7,7 +7,7 @@ class WeeklyTaskTile extends StatelessWidget {
   final bool isSelecting;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  //final VoidCallback onLongPress;
 
   const WeeklyTaskTile({
     Key? key,
@@ -15,7 +15,7 @@ class WeeklyTaskTile extends StatelessWidget {
     required this.isSelecting,
     required this.isSelected,
     required this.onTap,
-    required this.onLongPress,
+    //required this.onLongPress,
   }) : super(key: key);
 
   @override
@@ -41,7 +41,7 @@ class WeeklyTaskTile extends StatelessWidget {
         )
             : null,
         onTap: onTap,
-        onLongPress: onLongPress,
+        //onLongPress: onLongPress,
       ),
     );
   }

@@ -75,7 +75,7 @@ class _TaskSetPageState extends State<TaskSetPage> {
               isSelecting: false,
               isSelected: false,
               onTap: () => widget.onTaskEdit(context, task),
-              onLongPress: () {},
+              //onLongPress: () {},
               onToggle: () => widget.onTaskToggle(task),
               onSubTaskToggle: (subTask) => widget.onSubTaskToggle(task, subTask),
               onDelete: () => widget.onTaskDelete(task),

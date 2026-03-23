@@ -9,7 +9,7 @@ class TaskTile extends StatelessWidget {
   final bool isSelecting;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  //final VoidCallback onLongPress;
   final VoidCallback onToggle;
   final Function(SubTask) onSubTaskToggle;
   final VoidCallback onDelete;
@@ -22,7 +22,7 @@ class TaskTile extends StatelessWidget {
     required this.isSelecting,
     required this.isSelected,
     required this.onTap,
-    required this.onLongPress,
+    //required this.onLongPress,
     required this.onToggle,
     required this.onSubTaskToggle,
     required this.onDelete,
@@ -39,7 +39,7 @@ class TaskTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onLongPress,
+      //onLongPress: onLongPress,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         elevation: 2,

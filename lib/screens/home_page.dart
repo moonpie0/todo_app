@@ -31,19 +31,15 @@ class TodoHomePage extends StatefulWidget {
 }
 
 class _TodoHomePageState extends State<TodoHomePage> {
-  // 页面索引：0-每日，1-每周，2-待办（合并），3-待办集，4-日历
-  int _currentIndex = 0;
+  int _currentIndex = 0; // 0-每日，1-每周，2-待办，3-待办集，4-日历
   List<TodoItem> dailyTasks = [];
   List<TodoItem> weeklyTasks = [];
-  List<TodoItem> generalTasks = []; // 合并长期和截止
-
+  List<TodoItem> generalTasks = [];
   List<TaskSet> taskSets = [];
 
-  // 搜索相关
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
 
-  // Hive 盒子
   late Box tasksBox;
   late Box taskSetsBox;
 
@@ -88,7 +84,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {
       dailyTasks = _getTaskList('daily');
       weeklyTasks = _getTaskList('weekly');
-      generalTasks = _getTaskList('general'); // 新 key
+      generalTasks = _getTaskList('general');
     });
     _checkDailyReset();
   }
@@ -160,7 +156,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
-  // 从日历页面添加待办（区分类型，但日历只添加每周和带截止的待办）
+  // 从日历页面添加待办
   void _addTaskFromCalendar(String title,
       {required String type,
         String? weekday,
@@ -181,21 +177,16 @@ class _TodoHomePageState extends State<TodoHomePage> {
     if (type == 'weekly') {
       weeklyTasks.add(task);
     } else if (type == 'deadline') {
-      // 带截止日期的任务也放入 generalTasks
       generalTasks.add(task);
     }
     _saveTasks();
     setState(() {});
   }
 
-  // 切换待办完成状态（列表）
+  // 切换待办完成状态
   void _toggleTask(TodoItem task) {
-    if (task.target != null) return; // 进度任务不能直接切换
-    // 如果有子任务，则通过子任务控制完成状态，主任务完成状态由子任务决定
-    if (task.subtasks.isNotEmpty) {
-      // 子任务完成状态变化在子任务勾选时处理，这里不处理
-      return;
-    }
+    if (task.target != null) return;
+    if (task.subtasks.isNotEmpty) return;
     task.isDone = !task.isDone;
     _saveTasks();
     setState(() {});
@@ -204,7 +195,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
   // 切换子任务完成状态
   void _toggleSubTask(TodoItem parent, SubTask subTask) {
     subTask.isDone = !subTask.isDone;
-    // 如果所有子任务完成，主任务标记为完成
     parent.isDone = parent.subtasks.every((s) => s.isDone);
     _saveTasks();
     setState(() {});
@@ -238,7 +228,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     _exitSelectMode();
   }
 
-  // 进入多选模式
+  // 进入多选模式（由按钮触发）
   void _enterSelectMode() {
     setState(() {
       _isSelecting = true;
@@ -267,7 +257,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
 
   // 全选/取消全选当前列表
   void _toggleSelectAll() {
-    final currentList = _getCurrentTaskList();
+    final currentList = _getFilteredTasks();
     if (_selectedTasks.length == currentList.length) {
       _selectedTasks.clear();
     } else {
@@ -276,7 +266,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
-  // 获取当前显示的待办列表（考虑过滤）
+  // 获取当前显示的待办列表（原始数据）
   List<TodoItem> _getCurrentTaskList() {
     switch (_currentIndex) {
       case 0:
@@ -297,7 +287,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
     return all.where((t) => t.title.toLowerCase().contains(_searchText)).toList();
   }
 
-  // 编辑待办对话框（增加子任务编辑）
+  // 编辑待办对话框
   void _showEditDialog(BuildContext context, TodoItem task) {
     final titleController = TextEditingController(text: task.title);
     final currentController = TextEditingController(
@@ -314,7 +304,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
     bool hasDeadline = task.deadline != null;
     String? selectedSetId = task.setId;
 
-    // 子任务列表
     List<SubTask> subtasks = List.from(task.subtasks);
     final subTaskControllers = <TextEditingController>[];
 
@@ -333,7 +322,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     controller: titleController,
                     decoration: const InputDecoration(labelText: '待办内容'),
                   ),
-                  // 待办集选择
                   if (taskSets.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     DropdownButton<String>(
@@ -349,7 +337,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       onChanged: (v) => setState(() => selectedSetId = v),
                     ),
                   ],
-                  // 每周任务特有：星期选择
                   if (task.weekday != null) ...[
                     const SizedBox(height: 8),
                     DropdownButton<String>(
@@ -366,7 +353,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       onChanged: (v) => setState(() => selectedWeekday = v),
                     ),
                   ],
-                  // 截止日期（对所有非每日/每周任务显示）
                   if (_currentIndex == 2) ...[
                     const SizedBox(height: 8),
                     Row(
@@ -403,7 +389,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                         },
                       ),
                   ],
-                  // 进度待办开关
                   Row(
                     children: [
                       const Text('进度待办'),
@@ -438,7 +423,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  // 子任务列表
                   const Text('子任务', style: TextStyle(fontWeight: FontWeight.bold)),
                   ...subtasks.asMap().entries.map((entry) {
                     int idx = entry.key;
@@ -499,7 +483,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  // 删除逻辑
                   _deleteTask(task);
                   Navigator.pop(ctx);
                 },
@@ -512,7 +495,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
               ),
               TextButton(
                 onPressed: () {
-                  // 保存逻辑（原代码不变）
                   if (titleController.text.isEmpty) return;
                   if (task.weekday != null && selectedWeekday == null) {
                     ScaffoldMessenger.of(context)
@@ -611,7 +593,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     controller: titleController,
                     decoration: const InputDecoration(labelText: '待办内容'),
                   ),
-                  // 待办集选择
                   if (taskSets.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     DropdownButton<String>(
@@ -627,7 +608,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       onChanged: (v) => setState(() => selectedSetId = v),
                     ),
                   ],
-                  // 每周任务特有：星期选择
                   if (_currentIndex == 1) ...[
                     const SizedBox(height: 8),
                     DropdownButton<String>(
@@ -644,7 +624,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                       onChanged: (v) => setState(() => selectedWeekday = v),
                     ),
                   ],
-                  // 待办（合并）特有：截止日期选项
                   if (_currentIndex == 2) ...[
                     const SizedBox(height: 8),
                     Row(
@@ -681,7 +660,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                         },
                       ),
                   ],
-                  // 进度待办开关
                   Row(
                     children: [
                       const Text('进度待办'),
@@ -705,7 +683,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  // 子任务列表
                   const Text('子任务', style: TextStyle(fontWeight: FontWeight.bold)),
                   ...subtasks.asMap().entries.map((entry) {
                     int idx = entry.key;
@@ -761,7 +738,8 @@ class _TodoHomePageState extends State<TodoHomePage> {
                 onPressed: () {
                   if (titleController.text.isEmpty) return;
                   if (_currentIndex == 1 && selectedWeekday == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请选择星期几')));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(const SnackBar(content: Text('请选择星期几')));
                     return;
                   }
                   int? current, target;
@@ -769,11 +747,11 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     current = int.tryParse(currentController.text);
                     target = int.tryParse(targetController.text);
                     if (current == null || target == null || target <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请填写有效的数字')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('请填写有效的数字')));
                       return;
                     }
                   }
-                  // 过滤掉空标题的子任务
                   final validSubtasks = subtasks.where((s) => s.title.isNotEmpty).toList();
                   _addTask(
                     titleController.text,
@@ -811,10 +789,11 @@ class _TodoHomePageState extends State<TodoHomePage> {
     ];
     final sortedKeys = grouped.keys.toList()
       ..sort((a, b) => weekOrder.indexOf(a).compareTo(weekOrder.indexOf(b)));
-    return Map.fromIterable(sortedKeys, key: (k) => k, value: (k) => grouped[k]!);
+    return Map.fromIterable(sortedKeys,
+        key: (k) => k, value: (k) => grouped[k]!);
   }
 
-  // 构建普通列表（每日、待办）
+  // 构建普通列表（每日、待办）- 支持拖动排序
   Widget _buildSimpleList(List<TodoItem> tasks) {
     final filtered = _getFilteredTasks();
     if (filtered.isEmpty) {
@@ -830,8 +809,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
         final task = filtered[index];
         final matchingSets = taskSets.where((set) => set.id == task.setId);
         final taskSet = matchingSets.isNotEmpty ? matchingSets.first : null;
-
-        // 必须为每个 item 提供 Key，这里使用 task.id（确保唯一）
         return TaskTile(
           key: ValueKey(task.id),
           task: task,
@@ -842,12 +819,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
               _toggleSelection(task);
             } else {
               _showEditDialog(context, task);
-            }
-          },
-          onLongPress: () {
-            if (!_isSelecting) {
-              _enterSelectMode();
-              _toggleSelection(task);
             }
           },
           onToggle: () => _toggleTask(task),
@@ -862,30 +833,25 @@ class _TodoHomePageState extends State<TodoHomePage> {
         );
       },
       onReorder: (int oldIndex, int newIndex) {
-        // 处理索引：当 newIndex > oldIndex 时，由于删除操作，newIndex 需要减1
         if (oldIndex < newIndex) {
           newIndex -= 1;
         }
-
-        // 根据当前标签页更新对应的列表
         setState(() {
           final currentList = _getCurrentTaskList();
           final task = currentList.removeAt(oldIndex);
           currentList.insert(newIndex, task);
         });
-
-        // 保存到 Hive
         _saveTasks();
       },
     );
   }
 
+  // 构建每周列表（不支持拖动）
   Widget _buildWeeklyList() {
     final grouped = _groupWeeklyTasks();
     if (grouped.isEmpty) {
       return const Center(child: Text('暂无每周待办'));
     }
-    // 过滤每个分组
     final filteredGrouped = <String, List<TodoItem>>{};
     grouped.forEach((key, tasks) {
       final filtered = tasks.where((t) =>
@@ -927,12 +893,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
                     _showEditDialog(context, task);
                   }
                 },
-                onLongPress: () {
-                  if (!_isSelecting) {
-                    _enterSelectMode();
-                    _toggleSelection(task);
-                  }
-                },
               );
             }).toList(),
           ],
@@ -945,7 +905,6 @@ class _TodoHomePageState extends State<TodoHomePage> {
   void _onCalendarTaskToggle(TodoItem task, DateTime date) {
     final dateStr = date.toIso8601String().substring(0, 10);
     if (task.target != null) return;
-
     if (task.weekday != null) {
       if (task.completedDates.contains(dateStr)) {
         task.completedDates.remove(dateStr);
@@ -990,6 +949,13 @@ class _TodoHomePageState extends State<TodoHomePage> {
           ),
         ]
             : [
+          // 仅在每日、每周、待办页面显示“选择”按钮
+          if (_currentIndex <= 2)
+            IconButton(
+              icon: const Icon(Icons.checklist),
+              onPressed: _enterSelectMode,
+              tooltip: '选择',
+            ),
           IconButton(
             icon: const Icon(Icons.add_task),
             onPressed: _currentIndex == 4 ? null : () => _showAddDialog(context),
@@ -1025,7 +991,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
           ? CalendarPage(
         dailyTasks: dailyTasks,
         weeklyTasks: weeklyTasks,
-        longTermTasks: [], // 不再使用
+        longTermTasks: [],
         deadlineTasks: generalTasks.where((t) => t.deadline != null).toList(),
         onTaskToggle: _onCalendarTaskToggle,
         onAddTask: _addTaskFromCalendar,
@@ -1043,7 +1009,7 @@ class _TodoHomePageState extends State<TodoHomePage> {
           setState(() {});
         },
         onTaskEdit: _onCalendarTaskEdit,
-        onSubTaskToggle: _toggleSubTask, // 新增传入
+        onSubTaskToggle: _toggleSubTask,
       )
           : _currentIndex == 1 // 每周
           ? _buildWeeklyList()
