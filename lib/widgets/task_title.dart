@@ -9,12 +9,12 @@ class TaskTile extends StatelessWidget {
   final bool isSelecting;
   final bool isSelected;
   final VoidCallback onTap;
-  //final VoidCallback onLongPress;
   final VoidCallback onToggle;
   final Function(SubTask) onSubTaskToggle;
   final VoidCallback onDelete;
   final ValueChanged<int> onProgressChanged;
   final TaskSet? taskSet;
+  final bool showDragHandleSpace;
 
   const TaskTile({
     Key? key,
@@ -22,12 +22,12 @@ class TaskTile extends StatelessWidget {
     required this.isSelecting,
     required this.isSelected,
     required this.onTap,
-    //required this.onLongPress,
     required this.onToggle,
     required this.onSubTaskToggle,
     required this.onDelete,
     required this.onProgressChanged,
     this.taskSet,
+    this.showDragHandleSpace = false,
   }) : super(key: key);
 
   @override
@@ -36,10 +36,10 @@ class TaskTile extends StatelessWidget {
     final isWeekly = task.weekday != null;
     final hasDeadline = task.deadline != null;
     final hasSubtasks = task.subtasks.isNotEmpty;
+    final hasTime = task.timeInfo != null && task.timeInfo!.isNotEmpty;
 
     return GestureDetector(
       onTap: onTap,
-      //onLongPress: onLongPress,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         elevation: 2,
@@ -54,7 +54,7 @@ class TaskTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 第一行：复选框 + 标题 + 任务集标签
+              // 第一行：复选框 + 标题 + 任务集标签 + 时间 + 预留空间
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -98,9 +98,19 @@ class TaskTile extends StatelessWidget {
                         style: const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
                     ),
+                  if (hasTime)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        task.timeInfo!,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  if (showDragHandleSpace)
+                    const SizedBox(width: 48), // 预留拖动手柄空间
                 ],
               ),
-              // 第二行：每周/截止等额外信息
+              // 每周任务信息
               if (isWeekly)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -109,6 +119,7 @@ class TaskTile extends StatelessWidget {
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ),
+              // 截止日期
               if (hasDeadline)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -141,7 +152,7 @@ class TaskTile extends StatelessWidget {
                   ),
                 )),
               ],
-              // 进度条
+              // 进度任务（已预留右侧空间）
               if (isProgress) ...[
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
@@ -172,6 +183,8 @@ class TaskTile extends StatelessWidget {
                       },
                       color: morandiPurple,
                     ),
+                    if (showDragHandleSpace)
+                      const SizedBox(width: 48), // 预留拖动手柄空间，确保加减按钮不被遮挡
                   ],
                 ),
               ],

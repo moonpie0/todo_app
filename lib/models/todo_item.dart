@@ -37,6 +37,9 @@ class TodoItem {
   @HiveField(10)
   List<SubTask> subtasks;
 
+  @HiveField(11)
+  String? timeInfo; // 新增
+
   TodoItem({
     String? id,
     required this.title,
@@ -49,6 +52,7 @@ class TodoItem {
     this.setId,
     this.note,
     List<SubTask>? subtasks,
+    this.timeInfo,
   })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString() + (1000 + (DateTime.now().microsecond % 9000)).toString(),
         completedDates = completedDates ?? [],
         subtasks = subtasks ?? [];
@@ -65,6 +69,7 @@ class TodoItem {
     'setId': setId,
     'note': note,
     'subtasks': subtasks.map((s) => s.toJson()).toList(),
+    'timeInfo': timeInfo,
   };
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
@@ -82,6 +87,7 @@ class TodoItem {
       subtasks: (json['subtasks'] as List? ?? [])
           .map((s) => SubTask.fromJson(s))
           .toList(),
+      timeInfo: json['timeInfo'],
     );
   }
 }

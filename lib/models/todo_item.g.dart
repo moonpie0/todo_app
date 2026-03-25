@@ -28,13 +28,14 @@ class TodoItemAdapter extends TypeAdapter<TodoItem> {
       setId: fields[8] as String?,
       note: fields[9] as String?,
       subtasks: (fields[10] as List?)?.cast<SubTask>(),
+      timeInfo: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TodoItem obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +57,9 @@ class TodoItemAdapter extends TypeAdapter<TodoItem> {
       ..writeByte(9)
       ..write(obj.note)
       ..writeByte(10)
-      ..write(obj.subtasks);
+      ..write(obj.subtasks)
+      ..writeByte(11)
+      ..write(obj.timeInfo);
   }
 
   @override
